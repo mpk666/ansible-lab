@@ -1,0 +1,8 @@
+---
+- name: 加载 RedHat 系任务
+  ansible.builtin.import_tasks: redhat.yml
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: 加载 Debian 系任务
+  ansible.builtin.import_tasks: debian.yml
+  when: ansible_facts['os_family'] == "Debian"

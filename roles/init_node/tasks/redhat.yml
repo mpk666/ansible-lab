@@ -1,0 +1,77 @@
+---
+# tasks file for roles/init_node
+- name: 安装 EPEL 仓库
+  ansible.builtin.dnf:
+    name: epel-release
+    state: present
+
+- name: 安装 htop
+  ansible.builtin.dnf:
+    name: htop
+    state: present
+
+- name: 创建系统信息说明文件
+  ansible.builtin.copy:
+    content: "this host is managed by ansible\n"
+    dest: /root/managed.txt
+    mode: "0644"
+
+- name: 确认 node_exporter 在跑
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: started
+    enabled: true
+- name: 禁用 SELinux（写入配置，重启后生效）
+  ansible.builtin.replace:
+    path: /etc/sysconfig/selinux
+    regexp: '^SELINUX=enforcing'
+    replace: 'SELINUX={{ selinux_state }}'
+
+- name: 安装 iptables-services
+  ansible.builtin.dnf:
+    name: iptables-services
+    state: present
+
+- name: 停止并禁用 firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+- name: 启用 iptables 服务
+  ansible.builtin.systemd:
+    name: iptables
+    state: started
+    enabled: yes
+
+- name: 创建 node_exporter 系统用户
+  ansible.builtin.user:
+    name: node_exporter
+    system: yes
+    shell: /sbin/nologin
+
+- name: 下载 node_exporter {{ node_exporter_version }}
+  ansible.builtin.get_url:
+    url: "https://gh-proxy.com/https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+    mode: "0644"
+
+- name: 解压到 /usr/local
+  ansible.builtin.unarchive:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+    dest: /usr/local
+    remote_src: yes
+
+- name: 放置 systemd 服务文件
+  ansible.builtin.template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    mode: "0644"
+  notify: restart node_exporter
+
+- name: 启动并自启 node_exporter
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: started
+    enabled: yes
+

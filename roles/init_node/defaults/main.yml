@@ -1,0 +1,10 @@
+---
+# defaults file for roles/init_node
+
+# 系统基线
+selinux_state: disabled          # 未来某些环境要 enforcing，改这一个值就行
+
+# 下一课 node_exporter 会用到的，先占位
+node_exporter_version: 1.12.1
+node_exporter_port: 9100
+

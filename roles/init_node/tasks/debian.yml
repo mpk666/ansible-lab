@@ -1,0 +1,16 @@
+---
+- name: 更新 apt 缓存
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: 安装 node_exporter（Ubuntu 仓库自带包）
+  ansible.builtin.apt:
+    name: prometheus-node-exporter
+    state: present
+
+- name: 启动并自启 node_exporter
+  ansible.builtin.systemd:
+    name: prometheus-node-exporter
+    state: started
+    enabled: yes

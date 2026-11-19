@@ -1,0 +1,25 @@
+- name: 监控机基础工具初始化
+  hosts: monitoring
+  become: yes
+  tasks:
+    - name: 安装 EPEL 仓库
+      ansible.builtin.dnf:
+        name: epel-release
+        state: present
+
+    - name: 安装 htop
+      ansible.builtin.dnf:
+        name: htop
+        state: present
+
+    - name: 创建系统信息说明文件
+      ansible.builtin.copy:
+        content: "this host is managed by ansible\n"
+        dest: /root/managed.txt
+        mode: "0644"
+
+    - name: 确认 node_exporter 在跑
+      ansible.builtin.systemd:
+        name: node_exporter
+        state: started
+        enabled: yes
